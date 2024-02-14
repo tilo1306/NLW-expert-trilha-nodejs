@@ -40,6 +40,32 @@ export async function voteOnPoll(app: FastifyInstance) {
       } else if (userPreviousVoteOnPoll) {
         return reply
           .status(400)
+          .send({ message: 'You already voted on this poll.' })
+      }
+    }
+
+    if (sessionId) {
+      const userPreviousVoteOnPoll = await prisma.vote.findUnique({
+        where: {
+          sessionId_pollId: {
+            sessionId,
+            pollId,
+          },
+        },
+      })
+
+      if (
+        userPreviousVoteOnPoll &&
+        userPreviousVoteOnPoll.pollOptionId !== pollOptionId
+      ) {
+        await prisma.vote.delete({
+          where: {
+            id: userPreviousVoteOnPoll.id,
+          },
+        })
+      } else if (userPreviousVoteOnPoll) {
+        return reply
+          .status(400)
           .send({ message: 'You have already voted on this poll' })
       }
     }
